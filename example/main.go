@@ -25,6 +25,10 @@ func main() {
 
 type Server1 struct{}
 
+func (s *Server1) Name() string {
+	return "Server1"
+}
+
 func (s *Server1) Start(ctx context.Context) error {
 	println("Server1 started")
 	_, cancel := context.WithCancel(ctx)
@@ -50,6 +54,10 @@ func (s *Server1) Shutdown() error {
 }
 
 type Server2 struct{}
+
+func (s *Server2) Name() string {
+	return "Server2"
+}
 
 func (s *Server2) Start(ctx context.Context) error {
 	println("Server2 started")

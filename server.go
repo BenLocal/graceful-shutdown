@@ -3,6 +3,8 @@ package gracefulshutdown
 import "context"
 
 type Server interface {
+	Name() string
+
 	// Start starts the server and listens for incoming requests.
 	Start(ctx context.Context) error
 

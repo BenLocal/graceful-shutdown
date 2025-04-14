@@ -10,7 +10,7 @@ import (
 )
 
 type GracefulShutdown struct {
-	servers map[string]Server
+	servers []Server
 
 	signal  chan os.Signal
 	errChan chan error
@@ -19,14 +19,14 @@ type GracefulShutdown struct {
 // New creates a new GracefulShutdown instance.
 func NewGracefulShutdown() *GracefulShutdown {
 	return &GracefulShutdown{
-		servers: make(map[string]Server),
+		servers: []Server{},
 		signal:  make(chan os.Signal, 1),
 		errChan: make(chan error, 1),
 	}
 }
 
 func (g *GracefulShutdown) Add(name string, server Server) {
-	g.servers[name] = server
+	g.servers = append(g.servers, server)
 }
 
 func (g *GracefulShutdown) CatchSignals() {
@@ -37,14 +37,14 @@ func (g *GracefulShutdown) Start(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	for name, server := range g.servers {
-		go func(name string, srv Server) {
-			log.Printf("Starting server: %s", name)
+	for _, server := range g.servers {
+		go func(srv Server) {
+			log.Printf("Starting server: %s", srv.Name())
 			if err := srv.Start(ctx); err != nil {
 				log.Printf("Error starting server: %v", err)
 				g.errChan <- err
 			}
-		}(name, server)
+		}(server)
 	}
 
 	defer g.shutdown()
@@ -63,15 +63,15 @@ func (g *GracefulShutdown) Start(ctx context.Context) error {
 
 func (g *GracefulShutdown) shutdown() {
 	var wg sync.WaitGroup
-	for name, server := range g.servers {
+	for _, server := range g.servers {
 		wg.Add(1)
-		go func(name string, srv Server) {
-			log.Printf("Shutting down server: %s", name)
+		go func(srv Server) {
+			log.Printf("Shutting down server: %s", srv.Name())
 			if err := srv.Shutdown(); err != nil {
 				log.Printf("Error shutting down server: %v", err)
 			}
 			wg.Done()
-		}(name, server)
+		}(server)
 	}
 	wg.Wait()
 	log.Println("All servers shut down gracefully.")
