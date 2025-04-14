@@ -47,16 +47,17 @@ func (g *GracefulShutdown) Start(ctx context.Context) error {
 		}(name, server)
 	}
 
+	defer g.shutdown()
 	select {
 	case <-ctx.Done():
 		log.Println("Received shutdown signal, shutting down servers...")
-	case <-g.errChan:
+	case e := <-g.errChan:
 		log.Println("Server start error, shutting down servers...")
+		return e
 	case sig := <-g.signal:
 		log.Printf("Received signal: %s, shutting down servers...", sig)
 	}
 
-	g.shutdown()
 	return nil
 }
 
