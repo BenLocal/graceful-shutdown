@@ -17,7 +17,7 @@ type GracefulShutdown struct {
 }
 
 // New creates a new GracefulShutdown instance.
-func New() *GracefulShutdown {
+func NewGracefulShutdown() *GracefulShutdown {
 	return &GracefulShutdown{
 		servers: make(map[string]Server),
 		signal:  make(chan os.Signal, 1),
@@ -25,9 +25,8 @@ func New() *GracefulShutdown {
 	}
 }
 
-func (g *GracefulShutdown) Add(name string, server Server) *GracefulShutdown {
+func (g *GracefulShutdown) Add(name string, server Server) {
 	g.servers[name] = server
-	return g
 }
 
 func (g *GracefulShutdown) CatchSignals() {
@@ -37,6 +36,7 @@ func (g *GracefulShutdown) CatchSignals() {
 func (g *GracefulShutdown) Start(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
 	for name, server := range g.servers {
 		go func(name string, srv Server) {
 			log.Printf("Starting server: %s", name)
@@ -66,7 +66,7 @@ func (g *GracefulShutdown) shutdown() {
 		wg.Add(1)
 		go func(name string, srv Server) {
 			log.Printf("Shutting down server: %s", name)
-			if err := srv.Shutdown(context.Background()); err != nil {
+			if err := srv.Shutdown(); err != nil {
 				log.Printf("Error shutting down server: %v", err)
 			}
 			wg.Done()

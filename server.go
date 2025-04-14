@@ -7,5 +7,5 @@ type Server interface {
 	Start(ctx context.Context) error
 
 	// Shutdown gracefully shuts down the server, allowing any ongoing requests to complete.
-	Shutdown(ctx context.Context) error
+	Shutdown() error
 }
